@@ -1,0 +1,4 @@
+0:Apple scab
+1:Black rot
+2:Cedar apple rust
+3:healthy

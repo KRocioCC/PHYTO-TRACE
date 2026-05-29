@@ -1,7 +1,8 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
+import '../services/tflite_service.dart';
 import '../themes/app_theme.dart';
 
 class CameraScreen extends StatefulWidget {
@@ -14,7 +15,14 @@ class CameraScreen extends StatefulWidget {
 class _CameraScreenState extends State<CameraScreen> {
   File? _image;
   bool _isProcessing = false;
+  String _selectedCrop = 'apple'; // cultivo seleccionado
   final ImagePicker _picker = ImagePicker();
+
+  static const Map<String, String> _cropLabels = {
+    'apple': 'Manzana 🍎',
+    'potato': 'Papa 🥔',
+    'tomato': 'Tomate 🍅',
+  };
 
   Future<void> _pickImage(ImageSource source) async {
     try {
@@ -23,18 +31,18 @@ class _CameraScreenState extends State<CameraScreen> {
         imageQuality: 90,
       );
       if (picked != null) {
-        setState(() {
-          _image = File(picked.path);
-        });
+        setState(() => _image = File(picked.path));
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al seleccionar imagen: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al seleccionar imagen: $e')),
+        );
+      }
     }
   }
 
-  void _analyze() async {
+  Future<void> _analyze() async {
     if (_image == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Por favor selecciona una foto')),
@@ -44,22 +52,28 @@ class _CameraScreenState extends State<CameraScreen> {
 
     setState(() => _isProcessing = true);
 
-    // Simulate processing delay
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      final service = context.read<TfliteService>();
+      final prediction = await service.predictFromFile(_image!, _selectedCrop);
 
-    setState(() => _isProcessing = false);
-
-    if (mounted) {
-      Navigator.pushNamed(
-        context,
-        '/result',
-        arguments: {
-          'imagePath': _image!.path,
-          'label': 'Fusarium Wilt',
-          'confidence': 0.87,
-          'diseaseType': 'localized',
-        },
-      );
+      if (mounted) {
+        Navigator.pushNamed(
+          context,
+          '/result',
+          arguments: {
+            'imagePath': _image!.path,
+            'prediction': prediction,
+          },
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al analizar: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
     }
   }
 
@@ -71,7 +85,7 @@ class _CameraScreenState extends State<CameraScreen> {
         leading: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Container(
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
             ),
@@ -79,10 +93,7 @@ class _CameraScreenState extends State<CameraScreen> {
           ),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.menu),
-            onPressed: () {},
-          ),
+          IconButton(icon: const Icon(Icons.menu), onPressed: () {}),
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: CircleAvatar(
@@ -96,11 +107,68 @@ class _CameraScreenState extends State<CameraScreen> {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Main CTA Button
+              // ── Selector de cultivo ──────────────────────────────
+              Text(
+                'Selecciona el cultivo',
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyLarge
+                    ?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: _cropLabels.entries.map((entry) {
+                  final isSelected = _selectedCrop == entry.key;
+                  return Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _selectedCrop = entry.key),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: isSelected ? AppTheme.primary : Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isSelected
+                                ? AppTheme.primary
+                                : Colors.grey.shade300,
+                            width: 2,
+                          ),
+                          boxShadow: isSelected
+                              ? [
+                            BoxShadow(
+                              color: AppTheme.primary.withOpacity(0.25),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            )
+                          ]
+                              : [],
+                        ),
+                        child: Text(
+                          entry.value,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color:
+                            isSelected ? Colors.white : AppTheme.textLight,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+
+              const SizedBox(height: 24),
+
+              // ── Botón principal cámara ───────────────────────────
               GestureDetector(
-                onTap: _isProcessing ? null : () => _pickImage(ImageSource.camera),
+                onTap:
+                _isProcessing ? null : () => _pickImage(ImageSource.camera),
                 child: Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 28),
@@ -117,153 +185,108 @@ class _CameraScreenState extends State<CameraScreen> {
                   ),
                   child: Column(
                     children: [
-                      Icon(
-                        Icons.photo_camera,
-                        size: 64,
-                        color: Colors.white,
-                      ),
+                      const Icon(Icons.photo_camera,
+                          size: 64, color: Colors.white),
                       const SizedBox(height: 12),
                       Text(
                         'Tomar Foto',
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineMedium
+                            ?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Captura una foto de la hoja',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Colors.white70,
-                            ),
+                        'Cultivo: ${_cropLabels[_selectedCrop]}',
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyMedium
+                            ?.copyWith(color: Colors.white70),
                       ),
                     ],
                   ),
                 ),
               ),
+
               const SizedBox(height: 24),
 
-              // Image Preview Section
-              if (_image != null)
-                Column(
-                  children: [
-                    Text(
-                      'Vista Previa',
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppTheme.primary, width: 2),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(14),
-                        child: Image.file(
-                          _image!,
-                          height: 250,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        ElevatedButton.icon(
-                          onPressed: _isProcessing ? null : () => _pickImage(ImageSource.gallery),
-                          icon: const Icon(Icons.image),
-                          label: const Text('Galería'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.secondary,
-                            foregroundColor: Colors.black,
-                          ),
-                        ),
-                        ElevatedButton.icon(
-                          onPressed: () => setState(() => _image = null),
-                          icon: const Icon(Icons.clear),
-                          label: const Text('Borrar'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.alert,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+              // ── Vista previa ─────────────────────────────────────
+              if (_image != null) ...[
+                Text(
+                  'Vista Previa',
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyLarge
+                      ?.copyWith(fontWeight: FontWeight.bold),
                 ),
-
-              // Heatmap Placeholder Section
-              const SizedBox(height: 24),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      'Mapa de Calor Isotópico',
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      height: 150,
+                const SizedBox(height: 12),
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppTheme.primary, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: Image.file(
+                      _image!,
+                      height: 250,
                       width: double.infinity,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            AppTheme.primary.withOpacity(0.1),
-                            AppTheme.secondary.withOpacity(0.1),
-                            AppTheme.alert.withOpacity(0.1),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(12),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: _isProcessing
+                          ? null
+                          : () => _pickImage(ImageSource.gallery),
+                      icon: const Icon(Icons.image),
+                      label: const Text('Galería'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.secondary,
+                        foregroundColor: Colors.black,
                       ),
-                      child: Center(
-                        child: Text(
-                          _image != null ? 'Procesando...' : 'Sube una foto para ver el mapa',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: AppTheme.textLight,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: () => setState(() => _image = null),
+                      icon: const Icon(Icons.clear),
+                      label: const Text('Borrar'),
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.alert),
                     ),
                   ],
                 ),
-              ),
+              ],
 
-              // Analyze Button
+              // ── Botón analizar ───────────────────────────────────
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: _isProcessing ? null : _analyze,
-                  icon: _isProcessing ? const SizedBox(
+                  icon: _isProcessing
+                      ? const SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      valueColor:
+                      AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
-                  ) : const Icon(Icons.analytics),
+                  )
+                      : const Icon(Icons.analytics),
                   label: Text(_isProcessing ? 'Analizando...' : 'Analizar'),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),

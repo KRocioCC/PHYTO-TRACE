@@ -1,0 +1,20 @@
+{
+  "Potato___Early_blight": {
+    "riesgo": "ALTO",
+    "deteccion_temprana": "Manchas oscuras conc\u00e9ntricas detectadas.",
+    "accion": "Aplicar fungicida preventivo (ej. clorotalonil) y eliminar hojas infectadas.",
+    "estado": "Infecci\u00f3n f\u00fangica temprana"
+  },
+  "Potato___Late_blight": {
+    "riesgo": "ALTO",
+    "deteccion_temprana": "Lesiones acuosas compatibles con mildiu.",
+    "accion": "Tratamiento urgente con fungicida sist\u00e9mico (ej. metalaxil).",
+    "estado": "Infecci\u00f3n activa altamente agresiva"
+  },
+  "Potato___healthy": {
+    "riesgo": "BAJO",
+    "deteccion_temprana": "No se detectaron alteraciones relevantes.",
+    "accion": "Monitoreo peri\u00f3dico y rotaci\u00f3n de cultivos.",
+    "estado": "Cultivo saludable"
+  }
+}

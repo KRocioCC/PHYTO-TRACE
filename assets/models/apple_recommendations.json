@@ -1,0 +1,26 @@
+{
+  "Apple___Apple_scab": {
+    "riesgo": "ALTO",
+    "deteccion_temprana": "Manchas oliv\u00e1ceas iniciales detectadas.",
+    "accion": "Aplicar fungicida preventivo (ej. captan) y eliminar hojas ca\u00eddas.",
+    "estado": "Infecci\u00f3n f\u00fangica activa"
+  },
+  "Apple___Black_rot": {
+    "riesgo": "ALTO",
+    "deteccion_temprana": "Lesiones p\u00farpuras compatibles con pudrici\u00f3n negra.",
+    "accion": "Poda de ramas afectadas y aplicaci\u00f3n de fungicida c\u00faprico.",
+    "estado": "Propagaci\u00f3n en progreso"
+  },
+  "Apple___Cedar_apple_rust": {
+    "riesgo": "MEDIO",
+    "deteccion_temprana": "P\u00fastulas anaranjadas iniciales.",
+    "accion": "Eliminar cedros cercanos y aplicar fungicida sist\u00e9mico.",
+    "estado": "Infecci\u00f3n controlable"
+  },
+  "Apple___healthy": {
+    "riesgo": "BAJO",
+    "deteccion_temprana": "No se detectaron alteraciones relevantes.",
+    "accion": "Monitoreo peri\u00f3dico y mantener buenas pr\u00e1cticas.",
+    "estado": "Cultivo saludable"
+  }
+}

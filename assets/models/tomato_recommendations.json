@@ -1,0 +1,62 @@
+{
+  "Tomato___Bacterial_spot": {
+    "riesgo": "MEDIO",
+    "deteccion_temprana": "Posibles manchas iniciales detectadas.",
+    "accion": "Aplicar compuestos de cobre y evitar riego por aspersi\u00f3n.",
+    "estado": "Infecci\u00f3n bacteriana temprana"
+  },
+  "Tomato___Early_blight": {
+    "riesgo": "ALTO",
+    "deteccion_temprana": "La IA detect\u00f3 patrones compatibles con mancha foliar temprana.",
+    "accion": "Aplicar fungicida preventivo y eliminar hojas bajas.",
+    "estado": "Posible propagaci\u00f3n f\u00fangica"
+  },
+  "Tomato___Late_blight": {
+    "riesgo": "ALTO",
+    "deteccion_temprana": "Alteraciones compatibles con infecci\u00f3n avanzada detectadas.",
+    "accion": "Tratamiento urgente con fungicida sist\u00e9mico.",
+    "estado": "Infecci\u00f3n activa"
+  },
+  "Tomato___healthy": {
+    "riesgo": "BAJO",
+    "deteccion_temprana": "No se detectaron alteraciones relevantes.",
+    "accion": "Monitoreo peri\u00f3dico.",
+    "estado": "Cultivo saludable"
+  },
+  "Tomato___Leaf_Mold": {
+    "riesgo": "MEDIO",
+    "deteccion_temprana": "Posible moho foliar en desarrollo.",
+    "accion": "Mejorar ventilaci\u00f3n y aplicar biofungicida.",
+    "estado": "Infecci\u00f3n controlable"
+  },
+  "Tomato___Septoria_leaf_spot": {
+    "riesgo": "MEDIO",
+    "deteccion_temprana": "Manchas iniciales compatibles con Septoria.",
+    "accion": "Aplicar fungicida y eliminar hojas afectadas.",
+    "estado": "En progreso"
+  },
+  "Tomato___Spider_mites": {
+    "riesgo": "MEDIO",
+    "deteccion_temprana": "Patrones de da\u00f1o por \u00e1caros detectados.",
+    "accion": "Aplicar acaricida y aumentar humedad.",
+    "estado": "Plaga temprana"
+  },
+  "Tomato___Target_Spot": {
+    "riesgo": "MEDIO",
+    "deteccion_temprana": "Lesiones iniciales compatibles con Target Spot.",
+    "accion": "Rotaci\u00f3n de fungicidas.",
+    "estado": "Infecci\u00f3n moderada"
+  },
+  "Tomato___Tomato_mosaic_virus": {
+    "riesgo": "ALTO",
+    "deteccion_temprana": "Patrones virales detectados en tejido.",
+    "accion": "Eliminar plantas infectadas y desinfectar herramientas.",
+    "estado": "Virus activo"
+  },
+  "Tomato___Tomato_Yellow_Leaf_Curl_Virus": {
+    "riesgo": "ALTO",
+    "deteccion_temprana": "Curvatura y amarillamiento temprano.",
+    "accion": "Control de mosca blanca y eliminaci\u00f3n de malezas.",
+    "estado": "Virus en propagaci\u00f3n"
+  }
+}
