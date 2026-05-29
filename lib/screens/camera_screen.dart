@@ -31,7 +31,7 @@ class _CameraScreenState extends State<CameraScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al seleccionar imagen: $e')),
+        SnackBar(content: Text('Error selecting image: $e')),
       );
     }
   }
@@ -39,7 +39,7 @@ class _CameraScreenState extends State<CameraScreen> {
   void _analyze() async {
     if (_image == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor selecciona una foto')),
+        const SnackBar(content: Text('Please select a photo')),
       );
       return;
     }
@@ -76,7 +76,7 @@ class _CameraScreenState extends State<CameraScreen> {
       setState(() => _isProcessing = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al analizar: $e')),
+          SnackBar(content: Text('Error analyzing image: $e')),
         );
       }
     }
@@ -112,26 +112,26 @@ class _CameraScreenState extends State<CameraScreen> {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Menú', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                          Text('Menu', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                           const SizedBox(height: 12),
                           ListTile(
                             leading: const Icon(Icons.book),
-                            title: const Text('Manual Rápido'),
+                            title: const Text('Quick Guide'),
                             onTap: () {
                               Navigator.pop(ctx);
                               showDialog(
                                 context: context,
                                 builder: (_) => AlertDialog(
-                                  title: const Text('Manual Rápido'),
-                                  content: const Text('1) Tome una foto\n2) Presione Analizar\n3) Revise recomendaciones y contacte un especialista si es necesario'),
-                                  actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cerrar'))],
+                                  title: const Text('Quick Guide'),
+                                  content: const Text('1) Take a photo\n2) Press Analyze\n3) Review recommendations and contact a specialist if needed'),
+                                  actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close'))],
                                 ),
                               );
                             },
                           ),
                           ListTile(
                             leading: const Icon(Icons.info),
-                            title: const Text('Información del Modelo'),
+                            title: const Text('Model Information'),
                             onTap: () async {
                               Navigator.pop(ctx);
                               try {
@@ -139,9 +139,9 @@ class _CameraScreenState extends State<CameraScreen> {
                                 showDialog(
                                   context: context,
                                   builder: (_) => AlertDialog(
-                                    title: const Text('Modelo'),
-                                    content: Text('Modelo: phyto_trace_corn.tflite\nEtiquetas cargadas: $labelsCount'),
-                                    actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cerrar'))],
+                                    title: const Text('Model'),
+                                    content: Text('Model: phyto_trace_corn.tflite\nLabels loaded: $labelsCount'),
+                                    actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close'))],
                                   ),
                                 );
                               } catch (e) {
@@ -310,7 +310,7 @@ class _CameraScreenState extends State<CameraScreen> {
                 child: Column(
                   children: [
                     Text(
-                      'Mapa de Calor Isotópico',
+                      'Damage Heatmap',
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -333,7 +333,7 @@ class _CameraScreenState extends State<CameraScreen> {
                       ),
                       child: Center(
                         child: Text(
-                          _image != null ? 'Procesando...' : 'Sube una foto para ver el mapa',
+                          _image != null ? 'Processing...' : 'Upload a photo to see the map',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: AppTheme.textLight,
@@ -360,7 +360,7 @@ class _CameraScreenState extends State<CameraScreen> {
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   ) : const Icon(Icons.analytics),
-                  label: Text(_isProcessing ? 'Analizando...' : 'Analizar'),
+                  label: Text(_isProcessing ? 'Analyzing...' : 'Analyze'),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     backgroundColor: AppTheme.primary,

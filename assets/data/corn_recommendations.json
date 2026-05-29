@@ -1,67 +1,67 @@
 {
   "healthy": {
-    "diagnostico": "Cultivo saludable - Sin signos de enfermedad",
-    "accion": "Continuar monitoreo rutinario. Mantener medidas preventivas.",
-    "urgencia": "BAJA",
+    "diagnostico": "Healthy Crop - No signs of disease",
+    "accion": "Continue routine monitoring. Maintain preventive measures.",
+    "urgencia": "LOW",
     "tecnicas_nucleares": [
-      "Mapeo radioisotópico para evaluar eficiencia de nutrientes",
-      "Análisis de marcadores estables (13C, 15N) en hojas"
+      "Radioisotopic mapping to evaluate nutrient use efficiency",
+      "Stable marker analysis (13C, 15N) in leaf tissue"
     ],
     "recomendaciones_tecnologicas": [
-      "Riego regular según necesidad",
-      "Aplicación equilibrada de fertilizantes",
-      "Monitoreo preventivo cada 7-10 días"
+      "Regular irrigation as needed",
+      "Balanced fertilizer application",
+      "Preventive monitoring every 7-10 days"
     ],
     "imagen": "assets/images/healthy_corn.png"
   },
   "Cercospora leaf spot Gray leaf spot": {
-    "diagnostico": "Infección por Cercospora - Manchas foliares circulares con halos grises",
-    "accion": "Aplicar fungicida cúprico o triazoles. Remover hojas infectadas. Aumentar ventilación.",
-    "urgencia": "ALTA",
+    "diagnostico": "Cercospora Infection - Circular leaf spots with gray halos",
+    "accion": "Apply copper fungicide or triazoles. Remove infected leaves. Improve ventilation.",
+    "urgencia": "HIGH",
     "tecnicas_nucleares": [
-      "Mapeo isotópico con 32P para seguimiento de absorción de fósforo",
-      "Análisis de marcadores en tejidos afectados para determinar severidad"
+      "Isotopic mapping with 32P for phosphorus uptake tracking",
+      "Marker analysis in affected tissue to determine severity"
     ],
     "recomendaciones_tecnologicas": [
-      "Fungicida: Azoxistrobina, Flutriafol o similares",
-      "Dosis: 750-1000 mL/ha en 200-300 L de agua",
-      "Aplicar cada 7-10 días según condiciones de lluvia",
-      "Evitar riego por aspersión en horas de luz"
+      "Fungicide: Azoxystrobin, Flutriafol or similar",
+      "Dose: 750-1000 mL/ha in 200-300 L of water",
+      "Apply every 7-10 days based on rain conditions",
+      "Avoid sprinkler irrigation during sunlight hours"
     ],
     "imagen": "assets/images/cercospora_leaf_spot.png"
   },
   "Common rust": {
-    "diagnostico": "Roya común del maíz - Pústulas anaranjadas en hojas",
-    "accion": "Aplicar fungicida sistémico. Variedades resistentes en próxima siembra.",
-    "urgencia": "ALTA",
+    "diagnostico": "Common Corn Rust - Orange pustules on leaves",
+    "accion": "Apply systemic fungicide. Use resistant varieties in next planting.",
+    "urgencia": "HIGH",
     "tecnicas_nucleares": [
-      "Medición isotópica de la tasa de translocación de nutrientes en plantas infectadas",
-      "Análisis de 15N para evaluar impacto en absorción de nitrógeno"
+      "Isotopic measurement of nutrient translocation rate in infected plants",
+      "15N analysis to assess impact on nitrogen uptake"
     ],
     "recomendaciones_tecnologicas": [
-      "Fungicida: Triazoles (Tebuconazol, Propiconazol) o Estrobilurinas",
-      "Dosis: 1-1.5 L/ha en agua",
-      "Aplicar en estadio temprano de infección",
-      "Seleccionar variedades con resistencia a razas prevalentes",
-      "Rotación de cultivos"
+      "Fungicide: Triazoles (Tebuconazole, Propiconazole) or Strobilurins",
+      "Dose: 1-1.5 L/ha in water",
+      "Apply at early infection stage",
+      "Select varieties resistant to prevalent races",
+      "Crop rotation"
     ],
     "imagen": "assets/images/common_rust.png"
   },
   "Northern Leaf Blight": {
-    "diagnostico": "Tizón foliar norteño - Lesiones alargadas pardas/negras",
-    "accion": "Aplicar fungicida preventivo. Mejorar drenaje. Retirar rastrojos infectados.",
-    "urgencia": "ALTA",
+    "diagnostico": "Northern Leaf Blight - Elongated brown/black lesions",
+    "accion": "Apply preventive fungicide. Improve drainage. Remove infected residue.",
+    "urgencia": "HIGH",
     "tecnicas_nucleares": [
-      "Mapeo con radioisótopos para evaluar distribución de agua en tejidos",
-      "Análisis isotópico de respiración en tejidos dañados"
+      "Radioisotope mapping to evaluate water distribution in tissue",
+      "Isotopic respiration analysis in damaged tissue"
     ],
     "recomendaciones_tecnologicas": [
-      "Fungicida: Triazoles o Estrobilurinas",
-      "Dosis: 1-1.2 L/ha",
-      "Aplicar preventivamente antes de condiciones húmedas",
-      "Mejorar drenaje del terreno",
-      "Uso de variedades resistentes",
-      "Destruir rastrojos de cosecha anterior"
+      "Fungicide: Triazoles or Strobilurins",
+      "Dose: 1-1.2 L/ha",
+      "Apply preventively before wet conditions",
+      "Improve soil drainage",
+      "Use resistant varieties",
+      "Destroy crop residue from previous harvest"
     ],
     "imagen": "assets/images/northern_leaf_blight.png"
   }

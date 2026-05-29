@@ -22,11 +22,11 @@ class _ResultScreenState extends State<ResultScreen> {
   Widget build(BuildContext context) {
     final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
     final imagePath = args?['imagePath'] as String? ?? '';
-    final label = args?['label'] as String? ?? 'Enfermedad Detectada';
+    final label = args?['label'] as String? ?? 'Disease Detected';
     final confidence = args?['confidence'] as double? ?? 0.87;
-    final diagnostico = args?['diagnostico'] as String? ?? 'Análisis en progreso';
-    final accion = args?['accion'] as String? ?? 'Revisar con especialista';
-    final urgencia = args?['urgencia'] as String? ?? 'MEDIA';
+    final diagnostico = args?['diagnostico'] as String? ?? 'Analysis in progress';
+    final accion = args?['accion'] as String? ?? 'Review with specialist';
+    final urgencia = args?['urgencia'] as String? ?? 'MEDIUM';
     final topPredictions = (args?['topPredictions'] as List<dynamic>? ?? const [])
       .map((item) => Map<String, dynamic>.from(item as Map))
       .toList();
@@ -37,7 +37,7 @@ class _ResultScreenState extends State<ResultScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Resultado del Análisis'),
+        title: const Text('Analysis Result'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
@@ -59,7 +59,7 @@ class _ResultScreenState extends State<ResultScreen> {
               const SizedBox(height: 12),
 
               const Text(
-                'Mapa de calor educativo: la intensidad es una simulación visual y no localiza daño real.',
+                'Educational heatmap: intensity is a visual simulation and does not locate actual damage.',
                 style: TextStyle(fontSize: 12, color: AppTheme.textLight, height: 1.4),
               ),
 
@@ -115,10 +115,10 @@ class _ResultScreenState extends State<ResultScreen> {
         unselectedItemColor: Colors.white70,
         onTap: (index) => _onNavTap(context, index, label, diagnostico, accion, urgencia),
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.camera), label: 'Diagnóstico'),
-          BottomNavigationBarItem(icon: Icon(Icons.medical_services), label: 'Tratamiento'),
-          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Historial'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil'),
+          BottomNavigationBarItem(icon: Icon(Icons.camera), label: 'Diagnosis'),
+          BottomNavigationBarItem(icon: Icon(Icons.medical_services), label: 'Treatment'),
+          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
     );
@@ -126,7 +126,7 @@ class _ResultScreenState extends State<ResultScreen> {
 
   void _onNavTap(BuildContext context, int index, String label, String diagnostico, String accion, String urgencia) {
     switch (index) {
-      case 0: // Diagnóstico -> scroll to top / show summary
+      case 0: // Diagnosis -> scroll to top / show summary
         showModalBottomSheet(
           context: context,
           builder: (_) => Padding(
@@ -135,20 +135,20 @@ class _ResultScreenState extends State<ResultScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Resumen del Diagnóstico', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                Text('Diagnosis Summary', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
-                Text('Diagnóstico: $diagnostico'),
+                Text('Diagnosis: $diagnostico'),
                 const SizedBox(height: 6),
-                Text('Acción recomendada: $accion'),
+                Text('Recommended Action: $accion'),
                 const SizedBox(height: 6),
-                Text('Urgencia: $urgencia'),
+                Text('Urgency: $urgencia'),
                 const SizedBox(height: 12),
               ],
             ),
           ),
         );
         break;
-      case 1: // Tratamiento -> show suggested treatments and techniques
+      case 1: // Treatment -> show suggested treatments and techniques
         showModalBottomSheet(
           context: context,
           builder: (_) => Padding(
@@ -157,11 +157,11 @@ class _ResultScreenState extends State<ResultScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Tratamientos sugeridos', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                Text('Suggested Treatments', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 Text(accion),
                 const SizedBox(height: 12),
-                Text('Técnicas nucleares relacionadas', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+                Text('Related Nuclear Techniques', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 ...Provider.of<TfliteService>(context, listen: false).getNuclearTechniquesFor(label, urgencia).map((t) => Padding(
                       padding: const EdgeInsets.symmetric(vertical: 6),
@@ -172,7 +172,7 @@ class _ResultScreenState extends State<ResultScreen> {
           ),
         );
         break;
-      case 2: // Historial -> placeholder
+      case 2: // History -> placeholder
         showModalBottomSheet(
           context: context,
           builder: (_) => Padding(
@@ -181,15 +181,15 @@ class _ResultScreenState extends State<ResultScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Historial', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                Text('History', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
-                const Text('No hay entradas en el historial local. Realiza más análisis para poblar el historial.'),
+                const Text('No entries in local history. Perform more analyses to populate the history.'),
               ],
             ),
           ),
         );
         break;
-      case 3: // Perfil -> about
+      case 3: // Profile -> about
         showModalBottomSheet(
           context: context,
           builder: (_) => Padding(
@@ -198,9 +198,9 @@ class _ResultScreenState extends State<ResultScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Perfil', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                Text('Profile', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
-                const Text('PHYTO-TRACE v1.0 - Herramienta de apoyo. Consulte con especialistas para intervenciones.'),
+                const Text('PHYTO-TRACE v1.0 - Support tool. Consult with specialists for interventions.'),
               ],
             ),
           ),
@@ -226,12 +226,12 @@ class _ResultScreenState extends State<ResultScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Mapa de calor educativo',
+                  'Educational Heatmap',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 2),
                 const Text(
-                  'Activa una simulación visual sobre la foto.',
+                  'Enable a visual simulation on the photo.',
                   style: TextStyle(fontSize: 12, color: AppTheme.textLight),
                 ),
               ],
@@ -263,7 +263,7 @@ class _ResultScreenState extends State<ResultScreen> {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Colors.grey.shade300),
         ),
-        child: const Text('No se encontró la imagen del análisis'),
+        child: const Text('Analysis image not found'),
       );
     }
 
@@ -338,7 +338,7 @@ class _ResultScreenState extends State<ResultScreen> {
                     Icon(_showHeatmap ? Icons.warning : Icons.visibility, color: Colors.white, size: 16),
                     const SizedBox(width: 4),
                     Text(
-                      _showHeatmap ? 'Calor activo' : 'Sin calor',
+                      _showHeatmap ? 'Heat active' : 'No heat',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 12,
@@ -394,7 +394,7 @@ class _ResultScreenState extends State<ResultScreen> {
                           ),
                     ),
                     Text(
-                      '${(confidence * 100).toStringAsFixed(0)}% de confianza',
+                      '${(confidence * 100).toStringAsFixed(0)}% confidence',
                       style: TextStyle(
                         color: AppTheme.textLight,
                         fontSize: 12,
@@ -449,7 +449,7 @@ class _ResultScreenState extends State<ResultScreen> {
               Icon(Icons.schedule, color: AppTheme.primary, size: 24),
               const SizedBox(width: 8),
               Text(
-                'Predicción Temporal',
+                'Temporal Prediction',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -460,14 +460,14 @@ class _ResultScreenState extends State<ResultScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildTimelineDay(3, '3 días'),
-              _buildTimelineDay(7, '7 días'),
-              _buildTimelineDay(14, '14 días'),
+              _buildTimelineDay(3, '3 days'),
+              _buildTimelineDay(7, '7 days'),
+              _buildTimelineDay(14, '14 days'),
             ],
           ),
           const SizedBox(height: 16),
           Text(
-            'Área afectada estimada en $_selectedDay días: ${formatArea(minArea)} - ${formatArea(maxArea)}',
+            'Estimated affected area in $_selectedDay days: ${formatArea(minArea)} - ${formatArea(maxArea)}',
             style: const TextStyle(fontSize: 12, color: AppTheme.textLight),
           ),
         ],
@@ -545,7 +545,7 @@ class _ResultScreenState extends State<ResultScreen> {
               Icon(Icons.trending_down, color: indicatorColor, size: 24),
               const SizedBox(width: 8),
               Text(
-                'Pérdida de Cosecha Estimada',
+                'Estimated Crop Loss',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: indicatorColor,
@@ -579,7 +579,7 @@ class _ResultScreenState extends State<ResultScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            urgencyText == 'ALTA' ? 'ALTA - Intervenir en 24h' : urgencyText == 'MEDIA' ? 'MEDIA - Monitorizar' : 'BAJA - Seguimiento rutinario',
+            urgencyText == 'HIGH' ? 'HIGH - Intervene in 24h' : urgencyText == 'MEDIUM' ? 'MEDIUM - Monitor' : 'LOW - Routine follow-up',
             style: TextStyle(
               fontSize: 12,
               color: indicatorColor,
@@ -593,7 +593,7 @@ class _ResultScreenState extends State<ResultScreen> {
 
   Widget _buildNuclearRecommendation(String label, String diagnostico, String accion, String urgencia) {
     final isHealthy = label.toLowerCase() == 'healthy';
-    final title = isHealthy ? 'Cultivo Saludable' : 'Recomendación de Acción';
+    final title = isHealthy ? 'Healthy Crop' : 'Action Recommendation';
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -694,7 +694,7 @@ class _ResultScreenState extends State<ResultScreen> {
             children: [
               Icon(Icons.science, color: AppTheme.primary, size: 22),
               const SizedBox(width: 8),
-              Text('Técnicas sugeridas', style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold)),
+              Text('Suggested Techniques', style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold)),
             ],
           ),
           const SizedBox(height: 8),
@@ -721,7 +721,7 @@ class _ResultScreenState extends State<ResultScreen> {
         ElevatedButton.icon(
           onPressed: () => Navigator.pop(context),
           icon: const Icon(Icons.photo_camera),
-          label: const Text('Nueva Foto'),
+          label: const Text('New Photo'),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppTheme.secondary,
             foregroundColor: Colors.black,
@@ -734,7 +734,7 @@ class _ResultScreenState extends State<ResultScreen> {
             final label = args?['label'] as String? ?? '';
             final confidence = args?['confidence'] as double? ?? 0.0;
 
-            final summary = 'Resultado: $label\nConfianza: ${(confidence * 100).toStringAsFixed(1)}%';
+            final summary = 'Result: $label\nConfidence: ${(confidence * 100).toStringAsFixed(1)}%';
             try {
               if (imagePath.isNotEmpty) {
                 await Share.shareXFiles([XFile(imagePath)], text: summary);
@@ -742,11 +742,11 @@ class _ResultScreenState extends State<ResultScreen> {
                 await Share.share(summary);
               }
             } catch (e) {
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al compartir: $e')));
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error sharing: $e')));
             }
           },
           icon: const Icon(Icons.share),
-          label: const Text('Compartir'),
+          label: const Text('Share'),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppTheme.primary,
           ),
@@ -839,7 +839,7 @@ class _ResultScreenState extends State<ResultScreen> {
             children: [
               Icon(Icons.build, color: Colors.blue.shade700, size: 22),
               const SizedBox(width: 8),
-              Text('Recomendaciones Tecnológicas', 
+              Text('Technological Recommendations', 
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: Colors.blue.shade700,
