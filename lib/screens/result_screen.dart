@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../themes/app_theme.dart';
 import '../services/tflite_service.dart';
+import '../widgets/heatmap_overlay.dart';
 
 class ResultScreen extends StatefulWidget {
   const ResultScreen({super.key});
@@ -15,6 +16,7 @@ class ResultScreen extends StatefulWidget {
 
 class _ResultScreenState extends State<ResultScreen> {
   int _selectedDay = 3; // Default to 3 days
+  bool _showHeatmap = true;
 
   @override
   Widget build(BuildContext context) {
@@ -27,9 +29,6 @@ class _ResultScreenState extends State<ResultScreen> {
     final urgencia = args?['urgencia'] as String? ?? 'MEDIA';
     final topPredictions = (args?['topPredictions'] as List<dynamic>? ?? const [])
       .map((item) => Map<String, dynamic>.from(item as Map))
-      .toList();
-    final tecnicasNucleares = (args?['tecnicasNucleares'] as List<dynamic>? ?? const [])
-      .map((item) => item.toString())
       .toList();
     final recomendacionesTecnologicas = (args?['recomendacionesTecnologicas'] as List<dynamic>? ?? const [])
       .map((item) => item.toString())
@@ -50,8 +49,19 @@ class _ResultScreenState extends State<ResultScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              _buildHeatmapToggle(),
+
+              const SizedBox(height: 12),
+
               // Image with Heatmap Overlay
-              _buildImageWithHeatmap(imagePath),
+              _buildImageWithHeatmap(imagePath, label, confidence, urgencia),
+
+              const SizedBox(height: 12),
+
+              const Text(
+                'Mapa de calor educativo: la intensidad es una simulación visual y no localiza daño real.',
+                style: TextStyle(fontSize: 12, color: AppTheme.textLight, height: 1.4),
+              ),
 
               const SizedBox(height: 20),
 
@@ -199,7 +209,64 @@ class _ResultScreenState extends State<ResultScreen> {
     }
   }
 
-  Widget _buildImageWithHeatmap(String imagePath) {
+  Widget _buildHeatmapToggle() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.blur_on, color: AppTheme.primary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Mapa de calor educativo',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 2),
+                const Text(
+                  'Activa una simulación visual sobre la foto.',
+                  style: TextStyle(fontSize: 12, color: AppTheme.textLight),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: _showHeatmap,
+            onChanged: (value) => setState(() => _showHeatmap = value),
+            activeColor: AppTheme.primary,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImageWithHeatmap(String imagePath, String label, double confidence, String urgencia) {
+    final tflite = Provider.of<TfliteService>(context, listen: false);
+    final heatmap = imagePath.isNotEmpty
+        ? tflite.generateImageDamageHeatmap(File(imagePath))
+        : tflite.generateSyntheticHeatmap(label, confidence, urgencia);
+
+    if (imagePath.isEmpty) {
+      return Container(
+        height: 300,
+        width: double.infinity,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.shade300),
+        ),
+        child: const Text('No se encontró la imagen del análisis'),
+      );
+    }
+
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
@@ -221,21 +288,40 @@ class _ResultScreenState extends State<ResultScreen> {
               width: double.infinity,
               fit: BoxFit.cover,
             ),
-            // Heatmap overlay (red tint for disease)
-            Container(
-              height: 300,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                gradient: RadialGradient(
-                  center: Alignment.center,
-                  radius: 0.8,
-                  colors: [
-                    Colors.red.withOpacity(0.3),
-                    Colors.transparent,
-                  ],
+            if (_showHeatmap)
+              Positioned.fill(
+                child: Opacity(
+                  opacity: 0.04,
+                  child: Image.file(
+                    File(imagePath),
+                    height: 300,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
-            ),
+            if (_showHeatmap)
+              Positioned.fill(
+                child: Opacity(
+                  opacity: 0.88,
+                  child: HeatmapOverlay(heatmap: heatmap),
+                ),
+              ),
+            if (_showHeatmap)
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      center: Alignment.center,
+                      radius: 0.92,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withOpacity(0.08),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             // Badge showing status
             Positioned(
               top: 12,
@@ -243,16 +329,16 @@ class _ResultScreenState extends State<ResultScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppTheme.alert,
+                  color: _showHeatmap ? AppTheme.alert : AppTheme.primary,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.warning, color: Colors.white, size: 16),
+                    Icon(_showHeatmap ? Icons.warning : Icons.visibility, color: Colors.white, size: 16),
                     const SizedBox(width: 4),
                     Text(
-                      'Activa',
+                      _showHeatmap ? 'Calor activo' : 'Sin calor',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 12,
@@ -263,6 +349,12 @@ class _ResultScreenState extends State<ResultScreen> {
                 ),
               ),
             ),
+            if (!_showHeatmap)
+              Positioned.fill(
+                child: Container(
+                  color: Colors.transparent,
+                ),
+              ),
           ],
         ),
       ),

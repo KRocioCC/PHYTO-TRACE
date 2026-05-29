@@ -328,6 +328,253 @@ class TfliteService {
       'loss_percent': loss,
     };
   }
+
+  /// Genera un mapa de calor sintético para visualización educativa.
+  /// No intenta localizar daño real; solo simula zonas probables según
+  /// etiqueta, confianza y urgencia.
+  List<List<double>> generateSyntheticHeatmap(
+    String label,
+    double confidence,
+    String urgencia, {
+    int rows = 24,
+    int cols = 24,
+  }) {
+    final heatmap = List.generate(rows, (_) => List<double>.filled(cols, 0.0));
+    final normalizedConfidence = confidence.clamp(0.0, 1.0);
+    final key = label.toLowerCase();
+
+    final hotspots = <Map<String, double>>[];
+    if (key == 'healthy') {
+      hotspots.add({'x': 0.5, 'y': 0.5, 'strength': 0.08});
+    } else if (key.contains('rust')) {
+      hotspots.addAll([
+        {'x': 0.33, 'y': 0.26, 'strength': 0.96},
+        {'x': 0.66, 'y': 0.57, 'strength': 0.72},
+      ]);
+    } else if (key.contains('blight')) {
+      hotspots.addAll([
+        {'x': 0.50, 'y': 0.34, 'strength': 1.00},
+        {'x': 0.47, 'y': 0.69, 'strength': 0.60},
+      ]);
+    } else if (key.contains('cercospora') || key.contains('spot')) {
+      hotspots.addAll([
+        {'x': 0.29, 'y': 0.33, 'strength': 0.84},
+        {'x': 0.73, 'y': 0.63, 'strength': 0.66},
+      ]);
+    } else {
+      hotspots.addAll([
+        {'x': 0.44, 'y': 0.31, 'strength': 0.88},
+        {'x': 0.60, 'y': 0.65, 'strength': 0.72},
+      ]);
+    }
+
+    final urgencyBoost = urgencia.toUpperCase() == 'ALTA'
+        ? 1.15
+        : urgencia.toUpperCase() == 'MEDIA'
+            ? 1.0
+            : 0.85;
+
+    for (var r = 0; r < rows; r++) {
+      for (var c = 0; c < cols; c++) {
+        final x = cols == 1 ? 0.5 : c / (cols - 1);
+        final y = rows == 1 ? 0.5 : r / (rows - 1);
+
+        var value = 0.0;
+        for (final hotspot in hotspots) {
+          final hx = hotspot['x'] ?? 0.5;
+          final hy = hotspot['y'] ?? 0.5;
+          final strength = hotspot['strength'] ?? 0.5;
+          final dx = x - hx;
+          final dy = y - hy;
+          final distance = math.sqrt((dx * dx) + (dy * dy));
+          final sigma = key == 'healthy' ? 0.22 : 0.11;
+          final gaussian = math.exp(-((distance * distance) / (2 * sigma * sigma)));
+          value += gaussian * strength;
+        }
+
+        // Suavizado base para que no quede un mapa totalmente vacío.
+        value *= (0.42 + normalizedConfidence * 1.15) * urgencyBoost;
+        value = math.pow(value.clamp(0.0, 1.0), 0.65).toDouble();
+        heatmap[r][c] = value.clamp(0.0, 1.0);
+      }
+    }
+
+    return heatmap;
+  }
+
+  /// Genera un mapa de calor a partir de la imagen real.
+  /// Las zonas oscuras o con menor presencia de verde se pintan con mayor intensidad.
+  List<List<double>> generateImageDamageHeatmap(
+    File imageFile, {
+    int rows = 28,
+    int cols = 28,
+  }) {
+    final bytes = imageFile.readAsBytesSync();
+    final decoded = img.decodeImage(bytes);
+    if (decoded == null) {
+      return List.generate(rows, (_) => List<double>.filled(cols, 0.0));
+    }
+
+    final analyzed = img.copyResize(decoded, width: 224, height: 224, interpolation: img.Interpolation.average);
+    final totalWidth = analyzed.width.toDouble();
+    final totalHeight = analyzed.height.toDouble();
+    final cellWidth = totalWidth / cols;
+    final cellHeight = totalHeight / rows;
+
+    final heatmap = List.generate(rows, (_) => List<double>.filled(cols, 0.0));
+    final brightnessMap = List.generate(rows, (_) => List<double>.filled(cols, 0.0));
+
+    for (var row = 0; row < rows; row++) {
+      for (var col = 0; col < cols; col++) {
+        final startX = (col * cellWidth).floor().clamp(0, analyzed.width - 1);
+        final endX = (((col + 1) * cellWidth).ceil()).clamp(startX + 1, analyzed.width);
+        final startY = (row * cellHeight).floor().clamp(0, analyzed.height - 1);
+        final endY = (((row + 1) * cellHeight).ceil()).clamp(startY + 1, analyzed.height);
+
+        double sumRed = 0;
+        double sumGreen = 0;
+        double sumBlue = 0;
+        var count = 0;
+
+        for (var y = startY; y < endY; y++) {
+          for (var x = startX; x < endX; x++) {
+            final pixel = analyzed.getPixel(x, y);
+            sumRed += pixel.r;
+            sumGreen += pixel.g;
+            sumBlue += pixel.b;
+            count++;
+          }
+        }
+
+        if (count == 0) {
+          continue;
+        }
+
+        final avgRed = sumRed / count;
+        final avgGreen = sumGreen / count;
+        final avgBlue = sumBlue / count;
+
+        final luminance = ((0.299 * avgRed) + (0.587 * avgGreen) + (0.114 * avgBlue)) / 255.0;
+        final darkness = (1.0 - luminance).clamp(0.0, 1.0);
+        final maxChannel = math.max(avgRed, math.max(avgGreen, avgBlue));
+        final minChannel = math.min(avgRed, math.min(avgGreen, avgBlue));
+        final saturation = maxChannel <= 0 ? 0.0 : ((maxChannel - minChannel) / maxChannel).clamp(0.0, 1.0);
+
+        final greenDominance = ((avgGreen - math.max(avgRed, avgBlue)) / 255.0).clamp(-1.0, 1.0);
+        final brownDominance = (((avgRed * 0.70) + (avgBlue * 0.10)) - (avgGreen * 0.82)) / 255.0;
+        final brownness = brownDominance.clamp(0.0, 1.0);
+        final leafPresence = (((greenDominance + 1.0) * 0.30) + (brownness * 0.55) + (saturation * 0.15)).clamp(0.0, 1.0);
+
+        brightnessMap[row][col] = luminance;
+
+        // Brown/damaged pixels should dominate the score; healthy green zones should stay calm.
+        var score = (brownness * 0.68) + (darkness * 0.18) + ((1.0 - saturation) * 0.14);
+
+        // Penalize clearly healthy green tissue.
+        if (greenDominance > 0.10 && brownness < 0.28) {
+          score *= 0.15;
+        }
+
+        // Emphasize likely disease texture: dark, brown, and inside the leaf.
+        if (brownness > 0.30 && darkness > 0.22) {
+          score = math.min(1.0, score * 1.42 + 0.08);
+        }
+
+        // Gate out background noise.
+        score *= leafPresence;
+
+        heatmap[row][col] = score.clamp(0.0, 1.0);
+      }
+    }
+
+    final smoothed = _smoothHeatmap(heatmap);
+    return _focusHeatmap(smoothed, brightnessMap);
+  }
+
+  List<List<double>> _smoothHeatmap(List<List<double>> source) {
+    if (source.isEmpty || source.first.isEmpty) {
+      return source;
+    }
+
+    final rows = source.length;
+    final cols = source.first.length;
+    final result = List.generate(rows, (_) => List<double>.filled(cols, 0.0));
+
+    for (var row = 0; row < rows; row++) {
+      for (var col = 0; col < cols; col++) {
+        double sum = 0;
+        var count = 0;
+
+        for (var dy = -1; dy <= 1; dy++) {
+          for (var dx = -1; dx <= 1; dx++) {
+            final ny = row + dy;
+            final nx = col + dx;
+            if (ny < 0 || ny >= rows || nx < 0 || nx >= cols) {
+              continue;
+            }
+            sum += source[ny][nx];
+            count++;
+          }
+        }
+
+        final averaged = count == 0 ? source[row][col] : sum / count;
+        result[row][col] = math.pow(averaged.clamp(0.0, 1.0), 0.85).toDouble();
+      }
+    }
+
+    return result;
+  }
+
+  List<List<double>> _focusHeatmap(List<List<double>> source, List<List<double>> brightnessMap) {
+    if (source.isEmpty || source.first.isEmpty) {
+      return source;
+    }
+
+    final rows = source.length;
+    final cols = source.first.length;
+    final values = <double>[];
+
+    for (var row = 0; row < rows; row++) {
+      for (var col = 0; col < cols; col++) {
+        values.add(source[row][col]);
+      }
+    }
+
+    final mean = values.isEmpty ? 0.0 : values.reduce((a, b) => a + b) / values.length;
+    final variance = values.isEmpty
+        ? 0.0
+        : values.map((v) => math.pow(v - mean, 2).toDouble()).reduce((a, b) => a + b) / values.length;
+    final std = math.sqrt(variance);
+    final threshold = (mean + (std * 0.32)).clamp(0.08, 0.88);
+
+    final focused = List.generate(rows, (_) => List<double>.filled(cols, 0.0));
+
+    for (var row = 0; row < rows; row++) {
+      for (var col = 0; col < cols; col++) {
+        final v = source[row][col].clamp(0.0, 1.0);
+        final brightness = brightnessMap[row][col].clamp(0.0, 1.0);
+        var adjusted = v;
+
+        if (v <= threshold) {
+          adjusted = v * 0.28;
+        } else {
+          final emphasis = ((v - threshold) / (1.0 - threshold)).clamp(0.0, 1.0);
+          adjusted = math.min(1.0, 0.18 + (emphasis * emphasis * 0.82));
+        }
+
+        // Very dark pixels get a stronger boost, healthy bright pixels are kept calm.
+        if (brightness < 0.35) {
+          adjusted = math.min(1.0, adjusted * 1.15 + 0.08);
+        } else if (brightness > 0.58 && adjusted < 0.40) {
+          adjusted *= 0.72;
+        }
+
+        focused[row][col] = adjusted.clamp(0.0, 1.0);
+      }
+    }
+
+    return _smoothHeatmap(focused);
+  }
 }
 
 
