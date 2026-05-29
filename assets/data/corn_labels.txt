@@ -1,0 +1,4 @@
+0:Cercospora leaf spot Gray leaf spot
+1:Common rust
+2:healthy
+3:Northern Leaf Blight
