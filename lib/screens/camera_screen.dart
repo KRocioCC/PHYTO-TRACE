@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import '../themes/app_theme.dart';
 import '../services/tflite_service.dart';
+import '../themes/app_theme.dart';
 
 class CameraScreen extends StatefulWidget {
   const CameraScreen({super.key});
@@ -66,6 +66,9 @@ class _CameraScreenState extends State<CameraScreen> {
             'urgencia': prediction.urgencia,
             'topPredictions': prediction.topPredictions,
             'diseaseType': prediction.urgencia == 'BAJA' ? 'healthy' : 'localized',
+            'tecnicasNucleares': prediction.tecnicasNucleares ?? [],
+            'recomendacionesTecnologicas': prediction.recomendacionesTecnologicas ?? [],
+            'imagenRecomendacion': prediction.imagenRecomendacion,
           },
         );
       }
@@ -97,7 +100,84 @@ class _CameraScreenState extends State<CameraScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.menu),
-            onPressed: () {},
+            onPressed: () {
+              showModalBottomSheet<void>(
+                context: context,
+                builder: (BuildContext ctx) {
+                  final tflite = Provider.of<TfliteService>(context, listen: false);
+                  return SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Menú', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 12),
+                          ListTile(
+                            leading: const Icon(Icons.book),
+                            title: const Text('Manual Rápido'),
+                            onTap: () {
+                              Navigator.pop(ctx);
+                              showDialog(
+                                context: context,
+                                builder: (_) => AlertDialog(
+                                  title: const Text('Manual Rápido'),
+                                  content: const Text('1) Tome una foto\n2) Presione Analizar\n3) Revise recomendaciones y contacte un especialista si es necesario'),
+                                  actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cerrar'))],
+                                ),
+                              );
+                            },
+                          ),
+                          ListTile(
+                            leading: const Icon(Icons.info),
+                            title: const Text('Información del Modelo'),
+                            onTap: () async {
+                              Navigator.pop(ctx);
+                              try {
+                                final labelsCount = tflite.getLabelsCount();
+                                showDialog(
+                                  context: context,
+                                  builder: (_) => AlertDialog(
+                                    title: const Text('Modelo'),
+                                    content: Text('Modelo: phyto_trace_corn.tflite\nEtiquetas cargadas: $labelsCount'),
+                                    actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cerrar'))],
+                                  ),
+                                );
+                              } catch (e) {
+                                showDialog(
+                                  context: context,
+                                  builder: (_) => AlertDialog(
+                                    title: const Text('Modelo'),
+                                    content: Text('No se pudo cargar información del modelo: $e'),
+                                    actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cerrar'))],
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                          ListTile(
+                            leading: const Icon(Icons.email),
+                            title: const Text('Contactar Experto'),
+                            onTap: () {
+                              Navigator.pop(ctx);
+                              showDialog(
+                                context: context,
+                                builder: (_) => AlertDialog(
+                                  title: const Text('Contactar'),
+                                  content: const Text('Envíe los resultados a su especialista local o use los canales institucionales.'),
+                                  actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cerrar'))],
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
           ),
           Padding(
             padding: const EdgeInsets.all(8.0),

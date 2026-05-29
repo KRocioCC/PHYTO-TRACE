@@ -6,6 +6,9 @@ class Prediction {
   final String? accion;
   final String? urgencia;
   final List<Map<String, dynamic>> topPredictions;
+  final List<String>? tecnicasNucleares;
+  final List<String>? recomendacionesTecnologicas;
+  final String? imagenRecomendacion;
 
   Prediction({
     required this.label,
@@ -15,6 +18,9 @@ class Prediction {
     this.accion,
     this.urgencia,
     this.topPredictions = const [],
+    this.tecnicasNucleares,
+    this.recomendacionesTecnologicas,
+    this.imagenRecomendacion,
   });
 }
 
