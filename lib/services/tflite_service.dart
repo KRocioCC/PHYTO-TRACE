@@ -146,6 +146,13 @@ class TfliteService {
         accion: recommendation['accion'] ?? '',
         urgencia: recommendation['urgencia'] ?? 'MEDIA',
         topPredictions: topPredictions,
+        tecnicasNucleares: (recommendation['tecnicas_nucleares'] as List<dynamic>?)
+            ?.map((e) => e.toString())
+            .toList(),
+        recomendacionesTecnologicas: (recommendation['recomendaciones_tecnologicas'] as List<dynamic>?)
+            ?.map((e) => e.toString())
+            .toList(),
+        imagenRecomendacion: recommendation['imagen'] as String?,
       );
     } catch (e) {
       developer.log('TfliteService ERROR en predicción: $e');
@@ -217,6 +224,109 @@ class TfliteService {
     }
 
     return _softmax(scores);
+  }
+
+  /// Devuelve una lista de recomendaciones de "técnicas nucleares" según
+  /// la etiqueta pronosticada o el nivel de urgencia.
+  /// Esta función entrega recomendaciones generales y siempre sugiere
+  /// consultar con un especialista y respetar la normativa local.
+  List<String> getNuclearTechniquesFor(String label, String urgencia) {
+    final key = label.toLowerCase();
+    final List<String> techniques = [];
+
+    if (urgencia.toUpperCase() == 'ALTA') {
+      techniques.addAll([
+        'Mapeo isotópico con trazadores (ej. 15N) para seguimiento de nutrientes',
+        'Medición no destructiva mediante sensores nucleares para detección temprana',
+        'Análisis de marcadores isotópicos para identificar ruta de infección'
+      ]);
+    } else if (urgencia.toUpperCase() == 'MEDIA') {
+      techniques.addAll([
+        'Monitoreo isotópico periódico para evaluar eficacia de medidas agronómicas',
+        'Técnicas de marcador estable para cuantificar absorción de fertilizantes'
+      ]);
+    } else {
+      techniques.addAll([
+        'Monitoreo rutinario con muestreos representativos',
+        'Uso de trazadores para estudios experimentales localizados'
+      ]);
+    }
+
+    // Ajustes por etiqueta conocida (ejemplos)
+    if (key.contains('stunt') || key.contains('necrosis') || key.contains('spot')) {
+      techniques.add('Análisis isotópico en tejidos afectados para verificar progresión');
+    }
+
+    techniques.add('Consultar con un especialista en técnicas nucleares y cumplir la normativa');
+
+    return techniques;
+  }
+
+  /// Devuelve la cantidad de labels cargadas (si están disponibles)
+  int getLabelsCount() {
+    return _labels.length;
+  }
+
+  /// Estima el área afectada (m²) para una etiqueta dada en `days` días.
+  /// Esta función usa un modelo heurístico simple basado en la confianza
+  /// del modelo y en la urgencia reportada.
+  Map<String, double> estimateAffectedArea(String label, double confidence, int days, String urgencia) {
+    // Base area factor: más confianza => mayor área inicial estimada
+    final baseArea = (confidence.clamp(0.0, 1.0) * 100.0); // 0..100 m² base
+
+    // Urgency multiplier
+    final urg = urgencia.toUpperCase();
+    double urgencyFactor = 1.0;
+    if (urg == 'ALTA') urgencyFactor = 1.6;
+    else if (urg == 'MEDIA') urgencyFactor = 1.0;
+    else urgencyFactor = 0.6;
+
+    // Growth per day factor (example heuristic)
+    final dailyGrowth = 0.06 + (confidence * 0.08); // between 0.06 and 0.14
+
+    final projected = baseArea * urgencyFactor * (1 + dailyGrowth * days);
+
+    // Provide a small range +/- 20%
+    final min = (projected * 0.8).clamp(0.0, double.infinity);
+    final max = (projected * 1.2).clamp(0.0, double.infinity);
+
+    return {'min': min, 'max': max};
+  }
+
+  /// Estima el porcentaje de pérdida de cosecha esperado en `days` días.
+  /// Retorna 0..100.
+  double estimateCropLossPercent(String label, double confidence, int days, String urgencia) {
+    final conf = confidence.clamp(0.0, 1.0);
+    final urg = urgencia.toUpperCase();
+    double severity = 1.0;
+    if (urg == 'ALTA') severity = 1.4;
+    else if (urg == 'MEDIA') severity = 0.9;
+    else severity = 0.5;
+
+    // basic growth of impact over days
+    final dayFactor = 1 + (days / 14.0); // 1.0 -> 1 + days/14
+
+    // Label-based modifier (minor heuristic)
+    double labelModifier = 1.0;
+    final key = label.toLowerCase();
+    if (key.contains('severe') || key.contains('blight') || key.contains('necrosis')) labelModifier = 1.2;
+    if (key.contains('spot') || key.contains('mild')) labelModifier = 0.85;
+
+    final raw = conf * severity * dayFactor * labelModifier;
+    final percent = (raw * 100).clamp(0.0, 100.0);
+    return percent;
+  }
+
+  /// Combine estimations into a temporal prediction map
+  Map<String, dynamic> getTemporalPrediction(String label, double confidence, int days, String urgencia) {
+    final area = estimateAffectedArea(label, confidence, days, urgencia);
+    final loss = estimateCropLossPercent(label, confidence, days, urgencia);
+    return {
+      'days': days,
+      'area_min': area['min'],
+      'area_max': area['max'],
+      'loss_percent': loss,
+    };
   }
 }
 

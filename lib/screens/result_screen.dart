@@ -1,7 +1,10 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 import '../themes/app_theme.dart';
+import '../services/tflite_service.dart';
 
 class ResultScreen extends StatefulWidget {
   const ResultScreen({super.key});
@@ -25,6 +28,13 @@ class _ResultScreenState extends State<ResultScreen> {
     final topPredictions = (args?['topPredictions'] as List<dynamic>? ?? const [])
       .map((item) => Map<String, dynamic>.from(item as Map))
       .toList();
+    final tecnicasNucleares = (args?['tecnicasNucleares'] as List<dynamic>? ?? const [])
+      .map((item) => item.toString())
+      .toList();
+    final recomendacionesTecnologicas = (args?['recomendacionesTecnologicas'] as List<dynamic>? ?? const [])
+      .map((item) => item.toString())
+      .toList();
+    // final imagenRecomendacion = args?['imagenRecomendacion'] as String?; (removed - images not displayed)
 
     return Scaffold(
       appBar: AppBar(
@@ -51,17 +61,28 @@ class _ResultScreenState extends State<ResultScreen> {
               const SizedBox(height: 20),
 
               // Temporal Prediction Section
-              _buildTemporalPrediction(),
+              _buildTemporalPrediction(label, confidence, urgencia),
 
               const SizedBox(height: 20),
 
               // Crop Loss Indicator
-              _buildCropLossIndicator(),
+              _buildCropLossIndicator(label, confidence, urgencia),
+
+              const SizedBox(height: 20),
 
               const SizedBox(height: 20),
 
               // Nuclear Recommendation Card
               _buildNuclearRecommendation(label, diagnostico, accion, urgencia),
+
+              const SizedBox(height: 12),
+              // Technological Recommendations (if available)
+              if (recomendacionesTecnologicas.isNotEmpty)
+                _buildTecnologicalRecommendations(recomendacionesTecnologicas),
+
+              const SizedBox(height: 12),
+              // Nuclear techniques suggestions
+              _buildNuclearTechniques(label, urgencia),
 
               const SizedBox(height: 20),
 
@@ -82,6 +103,7 @@ class _ResultScreenState extends State<ResultScreen> {
         backgroundColor: AppTheme.primary,
         selectedItemColor: AppTheme.secondary,
         unselectedItemColor: Colors.white70,
+        onTap: (index) => _onNavTap(context, index, label, diagnostico, accion, urgencia),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.camera), label: 'Diagnóstico'),
           BottomNavigationBarItem(icon: Icon(Icons.medical_services), label: 'Tratamiento'),
@@ -90,6 +112,91 @@ class _ResultScreenState extends State<ResultScreen> {
         ],
       ),
     );
+  }
+
+  void _onNavTap(BuildContext context, int index, String label, String diagnostico, String accion, String urgencia) {
+    switch (index) {
+      case 0: // Diagnóstico -> scroll to top / show summary
+        showModalBottomSheet(
+          context: context,
+          builder: (_) => Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Resumen del Diagnóstico', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Text('Diagnóstico: $diagnostico'),
+                const SizedBox(height: 6),
+                Text('Acción recomendada: $accion'),
+                const SizedBox(height: 6),
+                Text('Urgencia: $urgencia'),
+                const SizedBox(height: 12),
+              ],
+            ),
+          ),
+        );
+        break;
+      case 1: // Tratamiento -> show suggested treatments and techniques
+        showModalBottomSheet(
+          context: context,
+          builder: (_) => Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Tratamientos sugeridos', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Text(accion),
+                const SizedBox(height: 12),
+                Text('Técnicas nucleares relacionadas', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                ...Provider.of<TfliteService>(context, listen: false).getNuclearTechniquesFor(label, urgencia).map((t) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Text('• $t'),
+                    )),
+              ],
+            ),
+          ),
+        );
+        break;
+      case 2: // Historial -> placeholder
+        showModalBottomSheet(
+          context: context,
+          builder: (_) => Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Historial', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                const Text('No hay entradas en el historial local. Realiza más análisis para poblar el historial.'),
+              ],
+            ),
+          ),
+        );
+        break;
+      case 3: // Perfil -> about
+        showModalBottomSheet(
+          context: context,
+          builder: (_) => Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Perfil', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                const Text('PHYTO-TRACE v1.0 - Herramienta de apoyo. Consulte con especialistas para intervenciones.'),
+              ],
+            ),
+          ),
+        );
+        break;
+    }
   }
 
   Widget _buildImageWithHeatmap(String imagePath) {
@@ -223,7 +330,18 @@ class _ResultScreenState extends State<ResultScreen> {
     );
   }
 
-  Widget _buildTemporalPrediction() {
+  Widget _buildTemporalPrediction(String label, double confidence, String urgencia) {
+    final tflite = Provider.of<TfliteService>(context, listen: false);
+    final pred = tflite.getTemporalPrediction(label, confidence, _selectedDay, urgencia);
+    final minArea = pred['area_min'] as double? ?? 0.0;
+    final maxArea = pred['area_max'] as double? ?? 0.0;
+
+    String formatArea(double v) {
+      if (v >= 1000) return '${(v / 1000).toStringAsFixed(1)} km²';
+      if (v >= 1) return '${v.toStringAsFixed(1)} m²';
+      return '${(v * 10000).toStringAsFixed(1)} cm²';
+    }
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -257,7 +375,7 @@ class _ResultScreenState extends State<ResultScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Área afectada estimada en $_selectedDay días: 15-25 m²',
+            'Área afectada estimada en $_selectedDay días: ${formatArea(minArea)} - ${formatArea(maxArea)}',
             style: const TextStyle(fontSize: 12, color: AppTheme.textLight),
           ),
         ],
@@ -299,26 +417,46 @@ class _ResultScreenState extends State<ResultScreen> {
     );
   }
 
-  Widget _buildCropLossIndicator() {
+  Widget _buildCropLossIndicator(String label, double confidence, String urgencia) {
+    final tflite = Provider.of<TfliteService>(context, listen: false);
+    final isHealthy = label.toLowerCase() == 'healthy';
+    
+    // Override values for healthy plants
+    final finalUrgencia = isHealthy ? 'BAJA' : urgencia;
+    final pred = isHealthy 
+      ? {'loss_percent': 0.0, 'days': _selectedDay, 'area_min': 0.0, 'area_max': 0.0}
+      : tflite.getTemporalPrediction(label, confidence, _selectedDay, urgencia);
+    
+    final lossPercent = (pred['loss_percent'] as double? ?? 0.0) / 100.0;
+    final displayPercent = ((lossPercent * 100)).clamp(0.0, 100.0).toStringAsFixed(0);
+    final urgencyText = finalUrgencia.toUpperCase();
+    
+    // Choose color based on urgency
+    final indicatorColor = urgencyText == 'ALTA'
+        ? AppTheme.alert
+        : urgencyText == 'MEDIA'
+            ? AppTheme.secondary
+            : Colors.green.shade600;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.alert.withOpacity(0.1),
+        color: indicatorColor.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.alert.withOpacity(0.3)),
+        border: Border.all(color: indicatorColor.withOpacity(0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.trending_down, color: AppTheme.alert, size: 24),
+              Icon(Icons.trending_down, color: indicatorColor, size: 24),
               const SizedBox(width: 8),
               Text(
                 'Pérdida de Cosecha Estimada',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.alert,
+                      color: indicatorColor,
                     ),
               ),
             ],
@@ -327,10 +465,10 @@ class _ResultScreenState extends State<ResultScreen> {
           Row(
             children: [
               Text(
-                '42%',
+                displayPercent + '%',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.alert,
+                      color: indicatorColor,
                     ),
               ),
               const SizedBox(width: 16),
@@ -338,21 +476,21 @@ class _ResultScreenState extends State<ResultScreen> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: LinearProgressIndicator(
-                    value: 0.42,
+                    value: lossPercent.clamp(0.0, 1.0),
                     minHeight: 12,
                     backgroundColor: Colors.grey.shade300,
-                    valueColor: AlwaysStoppedAnimation<Color>(AppTheme.alert),
+                    valueColor: AlwaysStoppedAnimation<Color>(indicatorColor),
                   ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          const Text(
-            '⚠️ ALTA - Intervenir en 24h',
+          Text(
+            urgencyText == 'ALTA' ? 'ALTA - Intervenir en 24h' : urgencyText == 'MEDIA' ? 'MEDIA - Monitorizar' : 'BAJA - Seguimiento rutinario',
             style: TextStyle(
               fontSize: 12,
-              color: AppTheme.alert,
+              color: indicatorColor,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -363,7 +501,7 @@ class _ResultScreenState extends State<ResultScreen> {
 
   Widget _buildNuclearRecommendation(String label, String diagnostico, String accion, String urgencia) {
     final isHealthy = label.toLowerCase() == 'healthy';
-    final title = isHealthy ? '✅ Cultivo Saludable' : '🔬 Recomendación de Acción';
+    final title = isHealthy ? 'Cultivo Saludable' : 'Recomendación de Acción';
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -426,7 +564,7 @@ class _ResultScreenState extends State<ResultScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '📌 Urgencia: $urgencia',
+                  'Urgencia: $urgencia',
                   style: TextStyle(
                     fontSize: 12,
                     fontStyle: FontStyle.italic,
@@ -446,12 +584,50 @@ class _ResultScreenState extends State<ResultScreen> {
     );
   }
 
+  Widget _buildNuclearTechniques(String label, String urgencia) {
+    final tflite = Provider.of<TfliteService>(context, listen: false);
+    final techniques = tflite.getNuclearTechniquesFor(label, urgencia);
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.science, color: AppTheme.primary, size: 22),
+              const SizedBox(width: 8),
+              Text('Técnicas sugeridas', style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ...techniques.map((t) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.arrow_right, size: 18, color: Colors.black54),
+                    const SizedBox(width: 6),
+                    Expanded(child: Text(t)),
+                  ],
+                ),
+              )),
+        ],
+      ),
+    );
+  }
+
   Widget _buildActionButtons() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         ElevatedButton.icon(
-          onPressed: () {},
+          onPressed: () => Navigator.pop(context),
           icon: const Icon(Icons.photo_camera),
           label: const Text('Nueva Foto'),
           style: ElevatedButton.styleFrom(
@@ -460,7 +636,23 @@ class _ResultScreenState extends State<ResultScreen> {
           ),
         ),
         ElevatedButton.icon(
-          onPressed: () {},
+          onPressed: () async {
+            final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
+            final imagePath = args?['imagePath'] as String? ?? '';
+            final label = args?['label'] as String? ?? '';
+            final confidence = args?['confidence'] as double? ?? 0.0;
+
+            final summary = 'Resultado: $label\nConfianza: ${(confidence * 100).toStringAsFixed(1)}%';
+            try {
+              if (imagePath.isNotEmpty) {
+                await Share.shareXFiles([XFile(imagePath)], text: summary);
+              } else {
+                await Share.share(summary);
+              }
+            } catch (e) {
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al compartir: $e')));
+            }
+          },
           icon: const Icon(Icons.share),
           label: const Text('Compartir'),
           style: ElevatedButton.styleFrom(
@@ -533,6 +725,48 @@ class _ResultScreenState extends State<ResultScreen> {
               ),
             );
           }).toList(),
+        ],
+      ),
+    );
+  }
+
+  // Recommendation images removed per user request
+
+  Widget _buildTecnologicalRecommendations(List<String> recommendations) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.blue.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.blue.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.build, color: Colors.blue.shade700, size: 22),
+              const SizedBox(width: 8),
+              Text('Recomendaciones Tecnológicas', 
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue.shade700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ...recommendations.map((rec) => Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.check, size: 18, color: Colors.green),
+                const SizedBox(width: 8),
+                Expanded(child: Text(rec, style: const TextStyle(fontSize: 13))),
+              ],
+            ),
+          )),
         ],
       ),
     );

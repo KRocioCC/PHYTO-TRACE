@@ -1,22 +1,68 @@
 {
+  "healthy": {
+    "diagnostico": "Cultivo saludable - Sin signos de enfermedad",
+    "accion": "Continuar monitoreo rutinario. Mantener medidas preventivas.",
+    "urgencia": "BAJA",
+    "tecnicas_nucleares": [
+      "Mapeo radioisotópico para evaluar eficiencia de nutrientes",
+      "Análisis de marcadores estables (13C, 15N) en hojas"
+    ],
+    "recomendaciones_tecnologicas": [
+      "Riego regular según necesidad",
+      "Aplicación equilibrada de fertilizantes",
+      "Monitoreo preventivo cada 7-10 días"
+    ],
+    "imagen": "assets/images/healthy_corn.png"
+  },
   "Cercospora leaf spot Gray leaf spot": {
-    "diagnostico": "Posible enfermedad detectada: Cercospora leaf spot Gray leaf spot",
-    "accion": "Aplicar fungicida y monitorear hojas",
-    "urgencia": "ALTA"
+    "diagnostico": "Infección por Cercospora - Manchas foliares circulares con halos grises",
+    "accion": "Aplicar fungicida cúprico o triazoles. Remover hojas infectadas. Aumentar ventilación.",
+    "urgencia": "ALTA",
+    "tecnicas_nucleares": [
+      "Mapeo isotópico con 32P para seguimiento de absorción de fósforo",
+      "Análisis de marcadores en tejidos afectados para determinar severidad"
+    ],
+    "recomendaciones_tecnologicas": [
+      "Fungicida: Azoxistrobina, Flutriafol o similares",
+      "Dosis: 750-1000 mL/ha en 200-300 L de agua",
+      "Aplicar cada 7-10 días según condiciones de lluvia",
+      "Evitar riego por aspersión en horas de luz"
+    ],
+    "imagen": "assets/images/cercospora_leaf_spot.png"
   },
   "Common rust": {
-    "diagnostico": "Posible enfermedad detectada: Common rust",
-    "accion": "Aplicar fungicida y monitorear hojas",
-    "urgencia": "ALTA"
-  },
-  "healthy": {
-    "diagnostico": "Cultivo saludable",
-    "accion": "Continuar monitoreo",
-    "urgencia": "BAJA"
+    "diagnostico": "Roya común del maíz - Pústulas anaranjadas en hojas",
+    "accion": "Aplicar fungicida sistémico. Variedades resistentes en próxima siembra.",
+    "urgencia": "ALTA",
+    "tecnicas_nucleares": [
+      "Medición isotópica de la tasa de translocación de nutrientes en plantas infectadas",
+      "Análisis de 15N para evaluar impacto en absorción de nitrógeno"
+    ],
+    "recomendaciones_tecnologicas": [
+      "Fungicida: Triazoles (Tebuconazol, Propiconazol) o Estrobilurinas",
+      "Dosis: 1-1.5 L/ha en agua",
+      "Aplicar en estadio temprano de infección",
+      "Seleccionar variedades con resistencia a razas prevalentes",
+      "Rotación de cultivos"
+    ],
+    "imagen": "assets/images/common_rust.png"
   },
   "Northern Leaf Blight": {
-    "diagnostico": "Posible enfermedad detectada: Northern Leaf Blight",
-    "accion": "Aplicar fungicida y monitorear hojas",
-    "urgencia": "ALTA"
+    "diagnostico": "Tizón foliar norteño - Lesiones alargadas pardas/negras",
+    "accion": "Aplicar fungicida preventivo. Mejorar drenaje. Retirar rastrojos infectados.",
+    "urgencia": "ALTA",
+    "tecnicas_nucleares": [
+      "Mapeo con radioisótopos para evaluar distribución de agua en tejidos",
+      "Análisis isotópico de respiración en tejidos dañados"
+    ],
+    "recomendaciones_tecnologicas": [
+      "Fungicida: Triazoles o Estrobilurinas",
+      "Dosis: 1-1.2 L/ha",
+      "Aplicar preventivamente antes de condiciones húmedas",
+      "Mejorar drenaje del terreno",
+      "Uso de variedades resistentes",
+      "Destruir rastrojos de cosecha anterior"
+    ],
+    "imagen": "assets/images/northern_leaf_blight.png"
   }
 }
