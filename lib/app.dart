@@ -12,7 +12,11 @@ class App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        Provider<TfliteService>(create: (_) => TfliteService()),
+        Provider<TfliteService>(create: (_) {
+          final service = TfliteService();
+          service.loadModel(); // Inicializa al crear
+          return service;
+        }),
       ],
       child: MaterialApp(
         title: 'PHYTO-TRACE',

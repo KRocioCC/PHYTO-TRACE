@@ -2,7 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 import '../themes/app_theme.dart';
+import '../services/tflite_service.dart';
 
 class CameraScreen extends StatefulWidget {
   const CameraScreen({super.key});
@@ -44,22 +46,36 @@ class _CameraScreenState extends State<CameraScreen> {
 
     setState(() => _isProcessing = true);
 
-    // Simulate processing delay
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      // Llamar a servicio para obtener predicción real
+      final tfliteService = Provider.of<TfliteService>(context, listen: false);
+      final prediction = await tfliteService.predictFromFile(_image!);
 
-    setState(() => _isProcessing = false);
+      setState(() => _isProcessing = false);
 
-    if (mounted) {
-      Navigator.pushNamed(
-        context,
-        '/result',
-        arguments: {
-          'imagePath': _image!.path,
-          'label': 'Fusarium Wilt',
-          'confidence': 0.87,
-          'diseaseType': 'localized',
-        },
-      );
+      if (mounted) {
+        Navigator.pushNamed(
+          context,
+          '/result',
+          arguments: {
+            'imagePath': _image!.path,
+            'label': prediction.label,
+            'confidence': prediction.confidence,
+            'diagnostico': prediction.diagnostico,
+            'accion': prediction.accion,
+            'urgencia': prediction.urgencia,
+            'topPredictions': prediction.topPredictions,
+            'diseaseType': prediction.urgencia == 'BAJA' ? 'healthy' : 'localized',
+          },
+        );
+      }
+    } catch (e) {
+      setState(() => _isProcessing = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al analizar: $e')),
+        );
+      }
     }
   }
 

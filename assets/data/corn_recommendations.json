@@ -1,0 +1,22 @@
+{
+  "Cercospora leaf spot Gray leaf spot": {
+    "diagnostico": "Posible enfermedad detectada: Cercospora leaf spot Gray leaf spot",
+    "accion": "Aplicar fungicida y monitorear hojas",
+    "urgencia": "ALTA"
+  },
+  "Common rust": {
+    "diagnostico": "Posible enfermedad detectada: Common rust",
+    "accion": "Aplicar fungicida y monitorear hojas",
+    "urgencia": "ALTA"
+  },
+  "healthy": {
+    "diagnostico": "Cultivo saludable",
+    "accion": "Continuar monitoreo",
+    "urgencia": "BAJA"
+  },
+  "Northern Leaf Blight": {
+    "diagnostico": "Posible enfermedad detectada: Northern Leaf Blight",
+    "accion": "Aplicar fungicida y monitorear hojas",
+    "urgencia": "ALTA"
+  }
+}

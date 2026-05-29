@@ -19,9 +19,12 @@ class _ResultScreenState extends State<ResultScreen> {
     final imagePath = args?['imagePath'] as String? ?? '';
     final label = args?['label'] as String? ?? 'Enfermedad Detectada';
     final confidence = args?['confidence'] as double? ?? 0.87;
-    final diseaseType = args?['diseaseType'] as String? ?? 'localized'; // 'localized' o 'scattered'
-
-    final isLocalized = diseaseType == 'localized';
+    final diagnostico = args?['diagnostico'] as String? ?? 'Análisis en progreso';
+    final accion = args?['accion'] as String? ?? 'Revisar con especialista';
+    final urgencia = args?['urgencia'] as String? ?? 'MEDIA';
+    final topPredictions = (args?['topPredictions'] as List<dynamic>? ?? const [])
+      .map((item) => Map<String, dynamic>.from(item as Map))
+      .toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -58,7 +61,11 @@ class _ResultScreenState extends State<ResultScreen> {
               const SizedBox(height: 20),
 
               // Nuclear Recommendation Card
-              _buildNuclearRecommendation(isLocalized),
+              _buildNuclearRecommendation(label, diagnostico, accion, urgencia),
+
+              const SizedBox(height: 20),
+
+              _buildTopPredictions(topPredictions),
 
               const SizedBox(height: 20),
 
@@ -354,28 +361,41 @@ class _ResultScreenState extends State<ResultScreen> {
     );
   }
 
-  Widget _buildNuclearRecommendation(bool isLocalized) {
-    final title = isLocalized ? 'Irradiación de Semillas' : 'Técnica del Insecto Estéril (TIE)';
-    final description = isLocalized
-        ? 'El mapa de calor muestra acumulación isotópica localizada. Irradiar semillas con 280-350 Gy aumenta la resistencia genética.'
-        : 'El mapa de calor muestra puntos dispersos. Aplicar TIE liberando insectos machos estériles (100-250 Gy) para colapsar la población de plagas.';
+  Widget _buildNuclearRecommendation(String label, String diagnostico, String accion, String urgencia) {
+    final isHealthy = label.toLowerCase() == 'healthy';
+    final title = isHealthy ? '✅ Cultivo Saludable' : '🔬 Recomendación de Acción';
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppTheme.primary.withOpacity(0.05),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.primary.withOpacity(0.3), width: 2),
+        border: Border.all(
+          color: urgencia == 'ALTA'
+              ? AppTheme.alert
+              : urgencia == 'MEDIA'
+                  ? AppTheme.secondary
+                  : AppTheme.primary,
+          width: 2,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.radio_button_on, color: AppTheme.primary, size: 24),
+              Icon(
+                urgencia == 'BAJA' ? Icons.check_circle : Icons.warning,
+                color: urgencia == 'ALTA'
+                    ? AppTheme.alert
+                    : urgencia == 'MEDIA'
+                        ? AppTheme.secondary
+                        : AppTheme.primary,
+                size: 24,
+              ),
               const SizedBox(width: 8),
               Text(
-                'Recomendación Nuclear',
+                title,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: AppTheme.primary,
@@ -394,23 +414,28 @@ class _ResultScreenState extends State<ResultScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
+                  diagnostico,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  description,
+                  accion,
                   style: const TextStyle(fontSize: 13, height: 1.5),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  '📌 Acción: Contacta al centro nuclear agrícola más cercano o programa nacional de control de plagas.',
+                Text(
+                  '📌 Urgencia: $urgencia',
                   style: TextStyle(
                     fontSize: 12,
                     fontStyle: FontStyle.italic,
-                    color: AppTheme.textLight,
+                    color: urgencia == 'ALTA'
+                        ? AppTheme.alert
+                        : urgencia == 'MEDIA'
+                            ? AppTheme.secondary
+                            : AppTheme.primary,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
@@ -443,6 +468,73 @@ class _ResultScreenState extends State<ResultScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildTopPredictions(List<Map<String, dynamic>> topPredictions) {
+    if (topPredictions.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.analytics, color: AppTheme.primary, size: 24),
+              const SizedBox(width: 8),
+              Text(
+                'Resultados del Modelo',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...topPredictions.take(4).map((item) {
+            final label = item['label']?.toString() ?? 'Clase';
+            final score = (item['score'] as num?)?.toDouble() ?? 0;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          label,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      Text('${(score * 100).toStringAsFixed(2)}%'),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: LinearProgressIndicator(
+                      value: score.clamp(0.0, 1.0),
+                      minHeight: 8,
+                      backgroundColor: Colors.grey.shade300,
+                      valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primary),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        ],
+      ),
     );
   }
 }
